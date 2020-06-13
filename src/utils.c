@@ -25,12 +25,12 @@ uint32_t sum_every_16bits(void *addr, int count)
     uint16_t * ptr = addr;
     
     while( count > 1 )  {
-        /*  This is the inner loop */
+        /*  按位求和 */
         sum += * ptr++;
         count -= 2;
     }
 
-    /*  Add left-over byte, if any */
+    /*  添加剩余字节 */
     if( count > 0 )
         sum += * (uint8_t *) ptr;
 
@@ -39,21 +39,21 @@ uint32_t sum_every_16bits(void *addr, int count)
 
 uint16_t checksum(void *addr, int count, int start_sum)
 {
-    /* Compute Internet Checksum for "count" bytes
-     *         beginning at location "addr".
+    /* 计算从位置“addr”开始的
+     *         字节数的校验和
      * Taken from https://tools.ietf.org/html/rfc1071
      */
     uint32_t sum = start_sum;
 
     sum += sum_every_16bits(addr, count);
     
-    /*  Fold 32-bit sum to 16 bits */
+    /*  将32位和压缩到16位 */
     while (sum>>16)
         sum = (sum & 0xffff) + (sum >> 16);
 
     return ~sum;
 }
-
+// 获取解析主机名
 int get_address(char *host, char *port, struct sockaddr *addr)
 {
     struct addrinfo hints;
@@ -79,13 +79,13 @@ int get_address(char *host, char *port, struct sockaddr *addr)
     
     return 1;
 }
-
+// 解析字符串转换成sock可接收的ipv4地址,sock是在tcp.c中声明的数据结构
 uint32_t parse_ipv4_string(char* addr) {
     uint8_t addr_bytes[4];
     sscanf(addr, "%hhu.%hhu.%hhu.%hhu", &addr_bytes[3], &addr_bytes[2], &addr_bytes[1], &addr_bytes[0]);
     return addr_bytes[0] | addr_bytes[1] << 8 | addr_bytes[2] << 16 | addr_bytes[3] << 24;
 }
-
+// 比较大小
 uint32_t min(uint32_t x, uint32_t y) {
     return x > y ? y : x;
 }
