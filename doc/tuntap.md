@@ -83,4 +83,32 @@ int tun_alloc(char *dev, int flags) {
   return fd;
 }
 ```
+tun_alloc()有两个参数:
 
+- `char *dev`包含接口的名称(例如，tap0、tun2等)。任何名称都可以使用，不过最好选择一个表明它是哪种接口的名称。在实践中，通常使用像tunX或tapX这样的名称。如果`*dev`是'\0'，内核将尝试创建请求类型的“第一个”可用接口(例如，tap0，但如果已经存在，则创建tap1，等等)。
+
+- `int flags`包含了告诉内核我们想要的接口类型的标志(tun或tap)。基本上，它可以取IFF_TUN值来表示TUN设备(包中没有以太网头)，或IFF_TAP值来表示TAP设备(包中有以太网头)。另外，另一个标志IFF_NO_PI可以使用基本值来修改。IFF_NO_PI告诉内核不提供数据包信息。IFF_NO_PI的目的是告诉内核包将是“纯”IP包，不增加字节。否则(如果IFF_NO_PI未被设置)，4个额外的字节被添加到包的开始(2个标志字节和2个协议字节)。IFF_NO_PI不需要匹配接口创建和重连接时间。还要注意，当使用Wireshark在接口上捕获流量时，这4个字节不会显示出来。
+
+一个程序可以使用以下代码来创建一个设备:
+
+```C
+  char tun_name[IFNAMSIZ];
+  char tap_name[IFNAMSIZ];
+  char *a_name;
+
+  ...
+
+  strcpy(tun_name, "tun1");
+  tunfd = tun_alloc(tun_name, IFF_TUN);  /* tun interface */
+
+  strcpy(tap_name, "tap44");
+  tapfd = tun_alloc(tap_name, IFF_TAP);  /* tap interface */
+
+  a_name = malloc(IFNAMSIZ);
+  a_name[0]='\0';
+  tapfd = tun_alloc(a_name, IFF_TAP);    /* '\0'让内核选择一个名称 */
+```
+
+如前所述，程序可以按照自己取的名字使用接口，也可以将其设置为持久性(并可选地将所有权分配给特定的用户/组)。如果是前者，那就没什么可说的了。但如果是后者，会发生什么呢?
+
+另外还有两个ioctl()，它们通常一起使用。第一个系统调用可以设置(或删除)接口上的持久状态。第二种方法允许将接口的所有权分配给普通(非根)用户。这两个特性都在程序tunctl (UML实用程序的一部分)和openvpn—mktun(可能还有其他程序)中实现。因为tunctl代码更简单，所以让我们来检查一下它，记住它只创建tap接口，因为这是linux使用的用户模式(为了清晰起见，代码稍加编辑和简化):
