@@ -112,3 +112,54 @@ tun_alloc()有两个参数:
 如前所述，程序可以按照自己取的名字使用接口，也可以将其设置为持久性(并可选地将所有权分配给特定的用户/组)。如果是前者，那就没什么可说的了。但如果是后者，会发生什么呢?
 
 另外还有两个ioctl()，它们通常一起使用。第一个系统调用可以设置(或删除)接口上的持久状态。第二种方法允许将接口的所有权分配给普通(非根)用户。这两个特性都在程序tunctl (UML实用程序的一部分)和openvpn—mktun(可能还有其他程序)中实现。因为tunctl代码更简单，所以让我们来检查一下它，记住它只创建tap接口，因为这是linux使用的用户模式(为了清晰起见，代码稍加编辑和简化):
+
+```C
+...
+  /* "delete" is set if the user wants to delete (ie, make nonpersistent)
+     an existing interface; otherwise, the user is creating a new
+     interface */
+  if(delete) {
+    /* remove persistent status */
+    if(ioctl(tap_fd, TUNSETPERSIST, 0) < 0){
+      perror("disabling TUNSETPERSIST");
+      exit(1);
+    }
+    printf("Set '%s' nonpersistent\n", ifr.ifr_name);
+  }
+  else {
+    /* emulate behaviour prior to TUNSETGROUP */
+    if(owner == -1 && group == -1) {
+      owner = geteuid();
+    }
+
+    if(owner != -1) {
+      if(ioctl(tap_fd, TUNSETOWNER, owner) < 0){
+        perror("TUNSETOWNER");
+        exit(1);
+      }
+    }
+    if(group != -1) {
+      if(ioctl(tap_fd, TUNSETGROUP, group) < 0){
+        perror("TUNSETGROUP");
+        exit(1);
+      }
+    }
+
+    if(ioctl(tap_fd, TUNSETPERSIST, 1) < 0){
+      perror("enabling TUNSETPERSIST");
+      exit(1);
+    }
+
+    if(brief)
+      printf("%s\n", ifr.ifr_name);
+    else {
+      printf("Set '%s' persistent and owned by", ifr.ifr_name);
+      if(owner != -1)
+          printf(" uid %d", owner);
+      if(group != -1)
+          printf(" gid %d", group);
+      printf("\n");
+    }
+  }
+  ...
+```
