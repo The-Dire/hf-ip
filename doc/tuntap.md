@@ -115,11 +115,11 @@ tun_alloc()有两个参数:
 
 ```C
 ...
-  /* "delete" is set if the user wants to delete (ie, make nonpersistent)
-     an existing interface; otherwise, the user is creating a new
-     interface */
+  /* 如果用户想要删除，需设置现有的接口为
+      “delete”属性(即非持久);
+    如果不设为"delete"属性,用户将创建一个新的接口 */
   if(delete) {
-    /* remove persistent status */
+    /* 删除持久状态 */
     if(ioctl(tap_fd, TUNSETPERSIST, 0) < 0){
       perror("disabling TUNSETPERSIST");
       exit(1);
@@ -127,7 +127,7 @@ tun_alloc()有两个参数:
     printf("Set '%s' nonpersistent\n", ifr.ifr_name);
   }
   else {
-    /* emulate behaviour prior to TUNSETGROUP */
+    /* 在TUNSETGROUP之前模拟行为 */
     if(owner == -1 && group == -1) {
       owner = geteuid();
     }
@@ -163,3 +163,13 @@ tun_alloc()有两个参数:
   }
   ...
 ```
+
+这些额外的ioctl()仍然必须由root运行。但我们现在拥有的是特定用户拥有的持久接口，因此作为该用户运行的进程可以成功地连接到该接口。
+
+如上所述，将(重新)附加到现有的tun/tap接口的代码与用于创建该接口的代码相同;换句话说，tun_alloc()可以再次使用。在这样做的时候，要想成功，必须做到三件事:
+
+- 接口必须已经存在，并且为试图连接的同一用户所拥有(可能是持久的)
+
+- 用户必须对/dev/net/tun具有读/写权限(用户为root权限)
+
+- 提供的标志必须与用于创建接口的标志匹配(例如，如果它是用IFF_TUN创建的，那么在重新附加时必须使用相同的标志)。
