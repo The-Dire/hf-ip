@@ -25,9 +25,6 @@ simpletun -h
 
 -------
 
-Refer to http://backreference.org/2010/03/26/tuntap-interface-tutorial/ for 
-more information on tun/tap interfaces in Linux in general, and on this 
-program in particular.
 The program must be run at one end as a server, and as client at the other 
 end. The tun/tap interface must already exist, be up and configured with an IP 
 address, and owned by the user who runs simpletun. That user must also have
