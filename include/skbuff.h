@@ -10,31 +10,32 @@
 * 每个发送或接收的数据包都使用这个数据结构进行处理。
 */
 
-// 为所有数据包的通用缓冲区结构
+// 为所有网络数据的通用缓冲区结构
 struct sk_buff {
     struct list_head list;
     struct rtentry *rt;
     struct netdev *dev;
     int refcnt;
-    uint16_t protocol;
-    uint32_t len;
-    uint32_t dlen;
-    uint32_t seq;
-    uint32_t end_seq;
-    uint8_t *end;
-    uint8_t *head;
-    uint8_t *data;
-    uint8_t *payload;
+    uint16_t protocol; // 来自驱动程序的包协议
+    uint32_t len;   // 缓冲区长度
+    uint32_t dlen; 
+    uint32_t seq;   // 第一个seq序号
+    uint32_t end_seq; // 最后一个seq序号
+    uint8_t *end;   // 指向缓冲区尾部
+    uint8_t *head;   // 指向skb缓冲区头
+    uint8_t *data;  // 指向数据头部的指针
+    uint8_t *payload;   // 负载
 };
-
+// sk_buff链表结构
 struct sk_buff_head {
     struct list_head head;
 
     uint32_t qlen;
 };
 // skb_head取sk_buff首部地址的声明在ehernet.h中因为以太网帧结构的实现需要该函数
+// 给skb结构分配内存
 struct sk_buff *alloc_skb(unsigned int size);
-void free_skb(struct sk_buff *skb);
+void free_skb(struct sk_buff *skb); // 释放skb内存
 uint8_t *skb_push(struct sk_buff *skb, unsigned int len);
 uint8_t *skb_head(struct sk_buff *skb); 
 void *skb_reserve(struct sk_buff *skb, unsigned int len);

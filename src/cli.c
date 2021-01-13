@@ -3,7 +3,7 @@
 #include "cli.h"
 
 int debug = 0;
-// 操作提示函数
+
 static void usage(char *app)
 {
     print_err("Usage: %s\n", app);
@@ -20,11 +20,11 @@ static void usage(char *app)
 }
 
 extern int optind;
-// 命令选项解析
+// 解析命令行选项,d则为debug模式
 static int parse_opts(int *argc, char*** argv)
 {
     int opt;
-
+    // getopt解析命令行选项的库函数
     while ((opt = getopt(*argc, *argv, "hd")) != -1) {
         switch (opt) {
         case 'd':
@@ -41,7 +41,7 @@ static int parse_opts(int *argc, char*** argv)
 
     return optind;
 }
-// main.c里调用的,命令交互式解析器实例
+
 void parse_cli(int argc, char **argv)
 {
     parse_opts(&argc, &argv);

@@ -18,7 +18,7 @@ int run_cmd(char *cmd, ...)
 
     return system(buf);
 }
-
+// 每16位求和
 uint32_t sum_every_16bits(void *addr, int count)
 {
     register uint32_t sum = 0;
@@ -36,7 +36,7 @@ uint32_t sum_every_16bits(void *addr, int count)
 
     return sum;
 }
-
+// 计算校验和
 uint16_t checksum(void *addr, int count, int start_sum)
 {
     /* 计算从位置“addr”开始的

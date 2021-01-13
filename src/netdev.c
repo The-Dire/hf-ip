@@ -36,16 +36,16 @@ void netdev_init(char *addr, char *hwaddr)
     loop = netdev_alloc("127.0.0.1", "00:00:00:00:00:00", 1500);
     netdev = netdev_alloc("10.0.0.4", "00:0c:29:6d:50:25", 1500);
 }
-
+// 网卡设备传输数据函数
 int netdev_transmit(struct sk_buff *skb, uint8_t *dst_hw, uint16_t ethertype)
 {
     struct netdev *dev;
     struct eth_hdr *hdr;
     int ret = 0;
 
-    dev = skb->dev;
+    dev = skb->dev; 
 
-    skb_push(skb, ETH_HDR_LEN);
+    skb_push(skb, ETH_HDR_LEN); // 把ethernet包放入到skb结构中
 
     hdr = (struct eth_hdr *)skb->data;
 
@@ -55,11 +55,11 @@ int netdev_transmit(struct sk_buff *skb, uint8_t *dst_hw, uint16_t ethertype)
     hdr->ethertype = htons(ethertype);
     eth_dbg("out", hdr);
 
-    ret = tun_write((char *)skb->data, skb->len);
+    ret = tun_write((char *)skb->data, skb->len); // skb结构写入tun设备
 
     return ret;
 }
-
+// 网卡接收数据函数
 static int netdev_receive(struct sk_buff *skb)
 {
     struct eth_hdr *hdr = eth_hdr(skb);
@@ -68,10 +68,10 @@ static int netdev_receive(struct sk_buff *skb)
 
     switch (hdr->ethertype) {
         case ETH_P_ARP:
-            arp_rcv(skb);
+            arp_rcv(skb); // 判断为arp协议,走arp协议处理流程
             break;
         case ETH_P_IP:
-            ip_rcv(skb);
+            ip_rcv(skb); // ip协议走ip协议流程
             break;
         case ETH_P_IPV6:
         default:
@@ -82,24 +82,24 @@ static int netdev_receive(struct sk_buff *skb)
 
     return 0;
 }
-
+// 网卡循环接收网络流量
 void *netdev_rx_loop()
 {
     while (running) {
-        struct sk_buff *skb = alloc_skb(BUFLEN);
+        struct sk_buff *skb = alloc_skb(BUFLEN); // 给网络流量分配skb结构
         
-        if (tun_read((char *)skb->data, BUFLEN) < 0) { 
+        if (tun_read((char *)skb->data, BUFLEN) < 0) {  // 读取tun中得到的数据存放到skb->data里
             perror("ERR: Read from tun_fd");
-            free_skb(skb);
+            free_skb(skb);  // 释放skb流量
             return NULL;
         }
 
-        netdev_receive(skb);
+        netdev_receive(skb); // 进入网卡流量接收处理流程
     }
 
     return NULL;
 }
-
+// 获取虚拟网卡设备
 struct netdev* netdev_get(uint32_t sip)
 {
     if (netdev->addr == sip) {

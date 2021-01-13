@@ -25,7 +25,7 @@ static int set_if_up(char *dev)
 
 /* 
  * Taken from Kernel Documentation/networking/tuntap.txt(https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
- * 虚拟网卡分配
+ * 虚拟网卡资源分配
  */
 static int tun_alloc(char *dev)
 {
@@ -60,35 +60,35 @@ static int tun_alloc(char *dev)
     strcpy(dev, ifr.ifr_name);
     return fd;
 }
-
+// 读tun设备接收到的数据
 int tun_read(char *buf, int len)
 {
     return read(tun_fd, buf, len);
 }
-
+// 往tun设备里写数据
 int tun_write(char *buf, int len)
 {
     return write(tun_fd, buf, len);
 }
-
+// 初始化tun设备
 void tun_init()
 {
     dev = calloc(10, 1);
     tun_fd = tun_alloc(dev);
 
-    if (set_if_up(dev) != 0) {
+    if (set_if_up(dev) != 0) { // 拉起网卡
         print_err("ERROR when setting up if\n");
     }
 
-    if (set_if_route(dev, taproute) != 0) {
+    if (set_if_route(dev, taproute) != 0) { // 设置路由
         print_err("ERROR when setting route for if\n");
     }
 
-    if (set_if_address(dev, tapaddr) != 0) {
+    if (set_if_address(dev, tapaddr) != 0) { // 设置ip地址
         print_err("ERROR when setting addr for if\n");
     }
 }
-
+// 释放tun设备
 void free_tun()
 {
     free(dev);

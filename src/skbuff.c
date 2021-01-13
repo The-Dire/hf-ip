@@ -26,14 +26,14 @@ void free_skb(struct sk_buff *skb)
         free(skb);
     }
 }
-// sk_buff保留头部空间
+// 给sk_buff链表结构预留更多的空间
 void *skb_reserve(struct sk_buff *skb, unsigned int len)
 {
     skb->data += len;
 
     return skb->data;
 }
-//  skb data区首部添加数据
+//  skb添加数据
 uint8_t *skb_push(struct sk_buff *skb, unsigned int len)
 {
     skb->data -= len;

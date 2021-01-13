@@ -14,7 +14,7 @@
     } while (0)
 
 struct eth_hdr;
-
+// 网卡的结构体
 struct netdev {
     uint32_t addr;
     uint8_t addr_len;
@@ -22,9 +22,9 @@ struct netdev {
     uint32_t mtu;
 };
 
-void netdev_init();
-int netdev_transmit(struct sk_buff *skb, uint8_t *dst, uint16_t ethertype);
-void *netdev_rx_loop();
-void free_netdev();
-struct netdev *netdev_get(uint32_t sip);
+void netdev_init(); // 初始化网卡
+int netdev_transmit(struct sk_buff *skb, uint8_t *dst, uint16_t ethertype); // 网络流量传输函数
+void *netdev_rx_loop(); // 网卡循环接收网络流量
+void free_netdev(); // 释放网卡资源
+struct netdev *netdev_get(uint32_t sip); // 获取网卡设备
 #endif

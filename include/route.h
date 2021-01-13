@@ -12,15 +12,15 @@
 struct rtentry {
     struct list_head list;
     uint32_t dst;
-    uint32_t gateway;
-    uint32_t netmask;
+    uint32_t gateway;   // 网关
+    uint32_t netmask;   // 子网掩码
     uint8_t flags;
     uint32_t metric;
-    struct netdev *dev;
+    struct netdev *dev; // 虚拟设备实体
 };
-
+// 初始化路由
 void route_init();
-struct rtentry *route_lookup(uint32_t daddr);
-void free_routes();
+struct rtentry *route_lookup(uint32_t daddr); // 路由查找
+void free_routes(); // 释放路由器资源
 
 #endif
