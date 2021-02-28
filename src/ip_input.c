@@ -50,10 +50,10 @@ int ip_rcv(struct sk_buff *skb)
 
     switch (ih->proto) {
     case ICMPV4:
-        icmpv4_incoming(skb);
+        icmpv4_incoming(skb); // 接收到icmp数据进入到icmp数据解析流程
         return 0;
     case IP_TCP:
-        tcp_in(skb);
+        tcp_in(skb);        // 接收到tcp数据进入tcp数据的解析流程
         return 0;
     default:
         print_err("Unknown IP header proto\n");
