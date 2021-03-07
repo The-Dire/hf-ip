@@ -3,6 +3,8 @@
 
 用户态协议栈运行的收发流程参考 [net_topylogy](doc/net_topylogy.md) 
 
+怎么运行该程序参照[编译及运行]()
+
 具体到实现通过用户态协议栈传输数据,只需要把数据封好转换为skb(skb可以理解为数据流缓存)写入tap设备即可。(代码在netdev.c的netdev_transmit函数)。接收数据在(netdev.c的netdev_receive函数),该函数就是调用比如IP协议调用ip_rcv,然后ip_rcv里通过判断语句调用tcp_in(tcp包处理函数)等操作。
 
 ### 目录
