@@ -161,7 +161,7 @@ int tcp_v4_connect(struct sock *sk, const struct sockaddr *addr, int addrlen, in
     sk->dport = ntohs(dport);
     sk->sport = generate_port();
     sk->daddr = ntohl(daddr);
-    /* TODO: Do not hardcode lvl-ip local interface */
+    /* TODO: Do not hardcode hf-ip local interface */
     sk->saddr = parse_ipv4_string("10.0.0.4"); 
 
     return tcp_connect(sk);
