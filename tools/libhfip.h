@@ -1,5 +1,5 @@
-#ifndef LIBLEVELIP_H_
-#define LIBLEVELIP_H_
+#ifndef LIBHFIP_H_
+#define LIBHFIP_H_
 
 #include <poll.h>
 #include <dlfcn.h>
