@@ -1,0 +1,182 @@
+```vim
+=============================================================================
+TOP1 (Use tapip instead of linux kernel TCP/IP stack)
+=============================================================================
+
++----------+
+| internet |
++----|-----+
++----|-----+
+|   eth0   |
++----|-----+
++----|-----+
+|  bridge  |
++----|-----+
++----|---------+
+|   tap0       |
+|--------------|
+| /dev/net/tun |
++--|----|---|--+
+  poll  |   |
+   |  read  |
+   |    |  write
++--|----|---|--+
+| my netstack  |
++--------------+
+
+=============================================================================
+real network of TOP1
+
+      gateway (10.20.133.20)
+        |
+      eth0 (0.0.0.0)
+        |
+       br0 (0.0.0.0)
+        |
+       tap0
+      (0.0.0.0)
+        |
+      /dev/net/tun
+        |
+      veth0 (10.20.133.21)
+      usermode
+      network
+
+=============================================================================
+How to build net environment of TOP1
+ # (set "CONFIG_TOP = 1" in global Makefile)
+ # (config real net environment in doc/brctl.sh)
+ # ./doc/brctl.sh open      (run as root)
+ # ./tapip                  (run as root)
+ [net shell]: (run some commands)
+ ...
+ # ./doc/brctl.sh close     (run as root)
+
+=============================================================================
+kernel-usermode stream of TOP1 ( usermode network stack receiving packet )
+
+ network
+    |
+    | packet recv
+   \|/
+xxx_interrupt() --> netif_rx()
+ { eth0 }                  |
+                           |
+                           |
+    .----------------------'
+    |  raise irq
+   \|/
+softirq: net_rx_action() --> netif_receive_skb() --> handle_bridge()
+                                                        { br0 }
+                                                           |
+                                                           |
+    .------------------------------------------------------'
+    |
+   \|/
+dev_queue_xmit(skb) --> tun_net_xmit()
+ [skb->dev == tap0]     1. put skb into tun's skbqueue
+                        2. wake up process(./tapip) waiting
+                                    for /dev/net/tun (read/poll)
+                             |
+                             |
+                            \|/
+                         process (read/poll)
+                       ( ./tapip            )
+                       { usermode network stack }
+
+
+=============================================================================
+kernel-usermode stream of TOP1 ( usermode network stack sending packet )
+
+ usermode
+ network
+ stack
+   |
+   | write
+  \|/
+/dev/net/tun --> tun_chr_aio_write() --> tun_get_user()
+                                         1. copy data from usermode
+                                         2. make skb(sending packet)
+                                         3. netif_rx_ni
+                                             |
+                                             |
+   .-----------------------------------------'
+   |
+  \|/
+netif_rx(skb)
+1. put packet into queue
+2. raise softirq
+   |
+  \|/
+softirq: net_rx_action() --> netif_receive_skb() --> handle_bridge()
+                                                        { br0 }
+                                                           |
+                                                           |
+    .------------------------------------------------------'
+    |
+   \|/
+dev_queue_xmit(skb) --> {eth0 netdevice}_hard_xmit()
+ [skb->dev == eth0]                       |
+                                          |  packet send
+                                         \|/
+                                       network
+
+
+
+=============================================================================
+TOP2 (tapip communicates with kernel TCP/IP stack)
+=============================================================================
+
+   localhost                   outside network
+   kernel stack                usermode stack [ ./tapip ]
+       |                         (10.0.0.1)
+       |                 (write) |        . (read)
+       |                        \|/      /|\
+       |                         '        |
+     tap0 <---- netif_rx() -----/dev/net/tun
+(10.0.0.2) `-- tun_net_xmit() ------------^
+
+
+=============================================================================
+arping model of TOP2
+
+The following diagram shows arp packet flow of command `# arping 10.0.0.1`.
+Refer to https://github.com/chobits/tapip/blob/master/doc/test#L18 for how to
+run this test.
+
+ tap0
+(10.0.0.2)
+
+route:
+Destination  Use Iface
+10.0.0.0     tap0
+
+                  +-------------------[Linux kernel TCP/IP stack]---------------------+
+                  |                                                                   |
+arping 10.0.0.1 -----> socket send --> route -->  tap0 -->  tap0::dev_hard_xmit       |
+                  | ( arp packet:                              |                      |
+                  |  10.0.0.2 request                          |                      |
+                  |  hwaddr of 10.0.0.1)                       |   _tap0 (10.0.0.2)_  |
+                  |                                            |                      |
+arping received <----- socket recv <--  tap0(netif_rx) <----.  |                      |
+                  |                                         |  |                      |
+                  +-----------------------------------------|--|----------------------+
+                                                            |  |
+                                                        /dev/net/tun
+                                                            |  |
+                                                   (write)  |  |  (read)
+                                                            |  |
+                             .--------> reply --> netdev_tx-'  |   _veth (10.0.0.1)_
+                             |                                \|/
+                             |                                 '
+                             '- arp_in <-- netif_in <-----  process
+        update arp cache <------'                   { usermode network stack }
+
+[ route module and netif_rx() are from linux kernel ]
+
+NOTE: 10.0.0.2 is tap0 ip address, not our network stack ip address.
+Our network stack(veth) is `outside network` in terms of tap0,
+so our program is just an emulator of outside network,
+we must assign a fake ip address(10.0.0.1) for ./tapip virtual netif veth!
+```
+
