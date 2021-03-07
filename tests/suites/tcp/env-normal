@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/../../utils/common"
+# Simple end-to-end test for an application's curl
+
+function strip_http_header {
+    sed 's/^Date:.*/Date:/' | sed 's/^Server:.*/Server:/'
+}
+
+function setup {
+    /usr/bin/env python2.7 -m SimpleHTTPServer 8001 >/dev/null 2>&1 &
+    httpserver="$!"
+
+    sleep 5
+}
+
+function teardown_suite {
+    kill "$httpserver"
+}
+
+setup
+trap teardown_suite EXIT ERR

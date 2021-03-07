@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/../../utils/common"
+# Simple end-to-end test for an application's curl
+
+function strip_http_header {
+    sed 's/^Date:.*/Date:/' | sed 's/^Server:.*/Server:/'
+}
+
+function setup {
+    /usr/bin/env python2.7 -m SimpleHTTPServer 8002 >/dev/null 2>&1 &
+    httpserver="$!"
+
+    tc class add dev tap0 parent 1: classid 1:1 htb rate 100mbit
+    tc filter add dev tap0 parent 1: protocol ip prio 1 u32 flowid 1:1 match ip sport 8002 0xffff
+    tc filter add dev tap0 parent 1: protocol ip prio 1 u32 flowid 1:1 match ip dport 8002 0xffff
+    tc qdisc add dev tap0 parent 1:1 netem delay 2000ms
+
+    sleep 5
+}
+
+function teardown_suite {
+    kill "$httpserver"
+}
+
+trap teardown_suite EXIT ERR
+setup

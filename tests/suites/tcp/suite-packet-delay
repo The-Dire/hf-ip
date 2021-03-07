@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/env-delayed"
+source "$(dirname $0)/tests" 8002 "$0"

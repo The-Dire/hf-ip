@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/env-normal"
+source "$(dirname $0)/tests" 8001 "$0"

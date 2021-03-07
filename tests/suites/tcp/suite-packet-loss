@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/env-lossy"
+source "$(dirname $0)/tests" 8004 "$0"

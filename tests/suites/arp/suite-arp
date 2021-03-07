@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -eu
+
+source "$(dirname $0)/../../utils/common"
+
+function test_arp {
+    arping -c3 -I tap0 10.0.0.4 >/dev/null
+}
+
+test_run "test_arp" "$0"
